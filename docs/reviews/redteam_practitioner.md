@@ -42,11 +42,11 @@ Premise: the scripts and flags in the brief, the campaign runner (JSON plan, sta
 
 ## (c) The next $100 as a decision tree
 
-Cost and wall time per node are sequential sums from the rates above; "noise" = replicate ΔF1 from N2; test MDD = 7–9 points (`sim/results/POWER.md`). Never run two GPT-4.1 stages in parallel.
+Per-call rates used (cost, seconds; `runs.csv`): GPT-4.1-mini L1 $0.00418/5.6 s, L5 $0.00253/4.6 s; GPT-4.1 L1 $0.0200/5.3 s; GPT-5.4 L5 test $0.01276/4.6 s, L5-P dev $0.01273/4.7 s, L6 dev $0.01116/20.1 s; GPT-5.4-mini L5 $0.0181/8.2 s; E8 forced-choice call mini $0.00077–0.00091, GPT-4.1 $0.00393; E5 closed-book call $0.00057 (mini) … $0.0074 (GPT-5.4-mini); pointwise request $0.00042/2.70 s. Node costs are these rates × calls (K ≠ 30 via the token model); wall times are sequential sums; "noise" = replicate ΔF1 from N2; test MDD = 7–9 points (`sim/results/POWER.md`). Never run two GPT-4.1 stages in parallel.
 
 - **N0 — $0, analysis; gates everything.** A1, A3, A4, A5; dedupe the duplicate test prompts; verify the 00:20 restart; per-query Jaccard of `L1_dev` vs `_rep1` and `_v1` vs `_v2`.
   - Jaccard > 0.9 → skip N9. Recall@30 at L5 < 0.8 → the retriever is the ceiling: K stays 30, go to N3, not "read less".
-- **N1 — dilution + position, GPT-4.1-mini dev: $1.64, 53 min (27 min 2-parallel).** `--k 10` at L1 ($0.17, 778 tok/call) and L5 ($0.10); `--shuffle-seed` at K = 30, L1 ($0.33) and L5 ($0.20).
+- **N1 — dilution + position, GPT-4.1-mini dev: $0.80, 27 min (14 min 2-parallel).** `--k 10` at L1 ($0.17, 778 tok/call) and L5 ($0.10); `--shuffle-seed` at K = 30, L1 ($0.33) and L5 ($0.20).
   - F1(k10) ≈ F1(k30) within noise and recall@10 ≈ recall@30 → β ≈ 0 → "read less" (M6/M4′ replayed offline, $0); skip N9; N3 only if the mini trails the flagship by > noise.
   - F1(k10) > F1(k30) → β > 0 → N3 mandatory. F1(k10) < F1(k30) with recall@10 < recall@30 → retriever-limited, K = 30, savings only via N3.
   - κ(shuffled, original) < 0.7 → every later test run needs two orders (doubles N6).
@@ -64,7 +64,7 @@ Cost and wall time per node are sequential sums from the rates above; "noise" = 
 - **N9 — cost-matched SC, mini dev (only if Jaccard < 0.9 and β > 0): $1.57, 41 min.** Reps 3–5 at L1 ($0.98) and L5 ($0.59); vote vs one GPT-4.1 call ($0.0200 = 4.8 mini calls).
 - **N10 — M9 grounding pilot on dev after N3: $0.14 (mini) / $0.70 (GPT-4.1), 13 min, ≈144 member calls. A11 CLIP baseline: $0 API, GPU minutes, any time.**
 
-Totals: unconditional N0–N6 core = **$27.7**; every conditional branch (N5-ext, N6-ext both flagships, N7–N10) = **$70.6**; ≈$29 remains as the 20 % retry reserve. The $74 nested-ladder re-run does **not** fit and must wait for N4 and N5.
+Totals: unconditional N0–N6 core = **$26.9**; every conditional branch taken (N5-ext $9.55, N6-ext both flagships $24.00, N7–N10 $9.37) = **$69.8**; ≈$30 remains as the 20 % retry reserve. The $74 nested-ladder re-run does **not** fit and must wait for N4 and N5.
 
 ## (d) What to log per call that is not logged today
 

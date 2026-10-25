@@ -15,20 +15,39 @@
   **re-run** with the frozen pipeline of §2 so that every pre-registered number comes from a run
   made after this commit.
 
-## 1. Hypotheses (state direction and a minimum effect that would matter)
+## 0b. Disclosure of what has already been seen (required — this is a pre-registration *after exposure*)
 
-H1 (ladder). Mean pairwise F1 on the **non-memorised stratum** decreases monotonically along the
-nested rungs L1 ⊃ L2 ⊃ L3 ⊃ L4 ⊃ L5; the L1→L5 drop is ≥ `⟨δ₁ = 0.10⟩` for every model in §3.
-  *Falsifier:* drop < δ₁ with the 95 % CI excluding δ₁ → the models reason over physical facts and
-  the catalogue words are not needed — a result we commit to reporting as the headline if it occurs.
+| comparison already run on test | models | run ids (ledger) | what we learned from it |
+| --- | --- | --- | --- |
+| L1 vs L2-T (old schema) | GPT-4.1-mini, GPT-4.1, GPT-5.4-mini | `⟨…⟩` | `⟨…⟩` |
+| L1 vs L3-H vs L5 (old schema) | GPT-5.4, GPT-5.4-mini | `⟨…⟩` | `⟨…⟩` |
+| `e10_regate` applied after every run | all | — | rule: `⟨…⟩`; whether it was ever changed after seeing test: `⟨yes/no, when⟩` |
+
+Every tunable used anywhere in the pipeline and its value: K = `⟨…⟩`, prune threshold = `⟨…⟩`,
+acceptance threshold / score calibration = `⟨…⟩`, deferral band = `⟨…⟩`, memorised criterion =
+`⟨…⟩`, fame cut-points = `⟨…⟩`, clustering rule and its parameter = `⟨…⟩`, canary count = `⟨…⟩`.
+
+## 1. Hypotheses — register effect sizes and equivalence margins, not directions
+
+The ladder is publishable in either direction, so H1/H3 are registered as *estimation* targets with
+a minimum detectable difference and an equivalence margin, not as one-sided predictions.
+
+H1 (ladder). Estimate the L1→L5 change in pairwise F1 on the **non-memorised stratum** per model,
+with a paired ensemble-bootstrap 95 % CI. Pre-specified interpretation: |Δ| ≥ `⟨δ₁ = 0.10⟩` with the
+CI excluding 0 → "words carry the performance"; CI entirely within ±`⟨ε₁ = 0.05⟩` → "equivalent:
+physical facts suffice"; otherwise → "undetermined at n = 294" (reported as such, no spin).
 
 H2 (memorisation). The share of test queries solved by the evidence-free forced-choice probe
 (§2.4) is ≥ `⟨π₀ = 0.20⟩` for at least one flagship model, and accuracy on that stratum is
 level-independent (|slope| across rungs < `⟨0.03⟩` per rung).
 
-H3 (physical channel). L5 − L5-P (dimensions permuted) ≥ `⟨δ₃ = 0.05⟩` on the non-memorised stratum
-(the model uses dimensions when that is all it has). *Falsifier:* no difference → L5 performance is
-not evidence-driven and must be attributed to residual leakage or memory.
+H3 (physical channel). Estimate L5 − L5-P (dimensions permuted) on the non-memorised stratum with
+the same three-way interpretation (δ₃ = `⟨0.05⟩`, ε₃ = `⟨0.03⟩`). A CI within ±ε₃ means L5 performance
+is not driven by dimensions and must be attributed to residual leakage or memory.
+
+H2b (memory keying). Forced choice with L5 facts as the only evidence: if accuracy on the
+closed-book-solved stratum falls to the non-memorised level, memory is word-keyed and L5/L6 are clean
+rungs; if it stays high, memory is record-keyed and §2.3 stratification governs every rung.
 
 H4 (cost). At equal relay cost, the pre-registered frugal policy (§2.3) is within `⟨0.02⟩` F1 of the
 flagship listwise K=30 baseline at ≤ `⟨70⟩` % of its cost. *Falsifier:* worse by more than 0.02.
@@ -69,7 +88,11 @@ Prompt-token fingerprint of each rung on dev (mean tokens/query) will be reporte
 - Models: `⟨xj-gpt-4.1-mini, xj-gpt-4.1, xj-gpt-5.4, xj-gpt-5.4-mini (reasoning_effort=low)⟩`;
   served-model label pinned to `⟨…⟩`; runs with any unpinned/served-other call are flagged.
 - Seeds: `⟨3⟩` independent runs per headline cell (L1, L5, L5-P on test); one **shuffled-order**
-  replicate per headline cell.
+  replicate per headline cell. Note: the GPT-5 family rejects `temperature`, so `--replicate` is not a
+  sampling replicate on GPT-5.4 — only a shuffled candidate order (`--shuffle-seed`) produces an
+  independent run there; GPT-4.1(-mini) replicates sample at the recorded temperature `⟨…⟩`.
+- **Stopping rule:** one seed per cell first; a second and third seed are added only while the paired
+  CI for that cell's registered comparison straddles both the MDD and the equivalence margin.
 
 ### 2.4 Memorisation probe
 - Evidence-free forced choice: query shown as `⟨id only | id + one neutral field⟩`; options = true
@@ -105,8 +128,11 @@ Prompt-token fingerprint of each rung on dev (mean tokens/query) will be reporte
   headline number for H1.
 - **Cost:** every table row carries relay USD/query and prompt+completion tokens/query; the headline
   figure is F1 vs cost with CIs.
-- **Exclusions:** runs with `api_errors > 0` are re-run, not patched; served-model mismatches are
-  excluded and counted.
+- **Exclusions:** runs with `api_errors > 0` are re-run, not patched; calls served under a label other
+  than the pinned snapshot are excluded and counted per run (the ledger shows 4–31 % unpinned `gpt-5.4`
+  calls on every GPT-5.4 run).
+- **No post-hoc rule.** `e10_regate` is not applied to pre-registered runs (its historical effect is
+  reported as pre/post on the exploratory runs). Canaries (`docs/04` §2.5) report in-band FA/FR rates.
 
 ## 5. What we will report regardless of outcome
 The full ladder table for every model on test with CIs; recall@30; the shortcut-heuristic baseline

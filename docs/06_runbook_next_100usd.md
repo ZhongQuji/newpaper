@@ -11,6 +11,17 @@ run automatically after each E10 job in the campaign runner; keep that, but also
 
 Legend: 💲 relay USD · ⏱ wall time (sequential) · ▶ what the result decides.
 
+> **Decide the ladder schema before spending (red-team AC, B.8).** Nodes 1–4 and 6 are schema-neutral
+> (they measure β, position bias, memory and cost-matching on existing rungs). Node 5 buys *old-schema*
+> rungs (L5 with title, `--withhold-title` as L6). If the nested v2 schema of `docs/05` §2.2 is adopted,
+> replace Node 5 by the v2 test ladder — same price class (≈ $74 for 5 rungs × 4 models at test, by the
+> ledger's per-call rates) — rather than paying for both.
+
+> **Node 0 cannot be skipped.** Three of its outputs gate everything after it: recall@30 (if < 0.6 the
+> retriever is the bottleneck and "read less" is the wrong direction), the duplicate-prompt count on the
+> test split, and whether the 10-25 00:20 restart of the L5-P campaign actually completed
+> (`records/queue/api_campaign_pt.log`; a lock file dated 00:37 may block the next start).
+
 ---
 
 ## Node 0 — free, before any call (≈ 1 h of work, $0)
@@ -21,8 +32,14 @@ python3 tools/eval_toolkit.py --selftest                       # toolkit is sane
 python3 tools/eval_toolkit.py --input decisions.csv --summary  # ensemble-level CIs for every existing run
 ```
 ▶ Produces the first honest table (B1, B2). Also answers: recall@30 of the shortlist (needs gold in
-the adapter), the "no gold in shortlist" count, and the duplicate-prompt question (B6b: hash the
-prompts of the L1 test run and count repeats).
+the adapter), the "no gold in shortlist" count, and the duplicate-prompt question (B6b). The ledger's
+`cache_hits` point to four different kinds of collision — 3 hits on every 294-call L1 test run (duplicate
+test queries), 8 hits in the L3-H2 dev run (records that differ *only* by holder → near-duplicates in
+the ground truth), 135/2,344 in the pointwise run (duplicate query–candidate pairs), 47/295 in the
+deep-research harness (the agent loops). Hash prompts per call to tell them apart.
+Also check **whether the relay returns logprobs** for each alias (it did for GPT-4.1-mini **[real]**):
+mechanism M1 of `docs/04` (retriever-score prior fused with P(yes)) — the largest simulated gain — needs a
+per-candidate score. If no logprobs, plan a verbalised 0–100 score (≈ +120 completion tokens/call).
 
 **Stop rule:** if recall@30 < 0.6 on test, the retriever — not the LLM — is the paper's bottleneck;
 re-order the tree to spend on the retriever first.
@@ -37,6 +54,10 @@ scripts/llm_reunion_agent.py --backend api --model xj-gpt-4.1-mini --split dev -
 (`--k 10` reuses the existing `--k` flag; the third line is a fresh K=30 seed for a paired comparison.)
 Compare with `tools/eval_toolkit.py --compare <k10 run> <k30 run>` restricted to candidates at
 positions < 10 in both.
+
+Also, at $0: if the K=30 runs carry per-candidate scores (logprobs) and the shortlist files carry
+retriever scores, fit the fused decision `logit P = logit P_llm + logit P_retriever − logit π` on dev
+and evaluate it offline — this is M1 (`docs/04` §3), the policy the simulation ranks first.
 
 ▶ **Measures list dilution β** — the parameter that decides the whole design space (`figures/sim/S8`):
 - if K=10 ≥ K=30 on the top-10 candidates (β > 0): go to **Node 2a** (cascade / adaptive-K will pay);
@@ -108,7 +129,7 @@ Priority order (cost from the ledger's dev→test ratio, `figures/real/R7`):
 | `--model xj-gpt-5.4 --split test --k 30 --level L5 --withhold-title` | 3.5 | 25 min | the only title-free rung, never run on test |
 | `--model xj-gpt-4.1-mini --split test --k 30 --level {L3,L3-H,L5}` + `L5 --dims-permute` + `L5 --withhold-title` | 4.6 | 1.7 h | full ladder on the cheapest model |
 | `--model xj-gpt-4.1 --split test --k 30 --level {L3-H,L5}` + `L5 --dims-permute` + `L5 --withhold-title` | 16.8 | 1.8 h | second flagship agrees on ladder shape? |
-| `--model xj-gpt-5.4 --split test --k 30 --level L1 --replicate 1` and `… --level L5 --replicate 1` | 9.7 | 50 min | seed variance on the two headline rungs |
+| `--model xj-gpt-5.4 --split test --k 30 --level L1 --shuffle-seed 1` and `… --level L5 --shuffle-seed 1` | 9.7 | 50 min | second run on the two headline rungs — the GPT-5 family rejects `temperature`, so `--replicate` would not sample; a shuffled order is the only independent run (needs the Node 3 flag) |
 | `--model xj-gpt-4.1-mini --split test --k 30 --level L1 --replicate {1,2}` | 2.5 | 60 min | 3 seeds on the cheapest model |
 
 ▶ With Node 0's toolkit this yields the first ladder table with paired, ensemble-level CIs
@@ -145,7 +166,24 @@ projection error on the existing dev→test pairs was < 5 %.
 
 ## What to log per call from now on (none of this is in the export today)
 
-`prompt_sha256`, `candidate_order` (ids as shown), `shuffle_seed`, `served_model`, `cache_hit` (bool),
-`logprobs` for the first answer token where the relay passes them, `completion_tokens_reasoning`
-(separately from visible), `retriever_scores` per candidate, and the **pre-regate** id list.
-With these, position-bias, duplicate-prompt, un-mixing and risk–coverage analyses become free.
+One JSONL line per call in `run_dir` (spec from `docs/reviews/redteam_practitioner.md` §d):
+
+| field | enables |
+| --- | --- |
+| `query_id`, `level`, `schema_hash` (fields per rung), `prompt_template_version`, `regate_rule_hash`, `git_sha` | joins across rungs and days; the nested schema; pre-registration |
+| `prompt_sha256` + `canonical_sha256` (ids/whitespace stripped) | which call collided; duplicate record vs duplicate shortlist |
+| `cache` = {hit/miss, key, `source_call_id`} | separating the four kinds of hit; excluding cached calls from variance |
+| `candidates[]` = ordered {id, position, retriever_score, retriever_rank, is_gold}, `shuffle_seed` | position bias, recall@K, offline replay of M1/M2 |
+| `response_raw`, `parsed_ids[]`, `parse_status` | output-length effects; parse failures as their own class |
+| `logprobs` (first-token P(yes); per-id where passed) | calibration, M1 fusion, risk–coverage, stratification weights |
+| `usage` incl. `reasoning_tokens`, `cached_tokens` | reasoning tax per query; provider cache savings |
+| `requested_model`, `served_model`, `system_fingerprint`, `request_id` | stratify by served snapshot; relay audit |
+| `attempts[]` = {t_start, t_end, http_status, error_class} | retries, timeouts, slow-relay periods |
+| `sampling` = {temperature or "rejected", reasoning_effort, seed} | replicate interpretability |
+| `pre_regate_ids[]`, `post_regate_ids[]` | blocker B6 in one place |
+
+With these, position-bias, duplicate-prompt, stratification and risk–coverage analyses are offline
+joins on `query_id`; without them each needs a re-run. Operational: cap concurrency **per model**
+(GPT-4.1 was rationed "9/36" on the relay **[real]**), add per-call retry with backoff + resume from the
+last completed query (the L5-P job died after 4 timeouts of ~126 s), and never quote a run with
+`api_errors > 0`.

@@ -41,7 +41,7 @@ inferences the authors must confirm against the local repository.
 | B4 | **The ladder is not nested, and L5 still shows the title.** L2-T prompts are *longer* than L1 (2,316 vs 1,959 tok/call — something ~350 tokens long was substituted for the title); only L6 (`--level L5 --withhold-title`) removes the title, so the "austere" L5 keeps the single most leaking field on the 31–40 % title-leak subset. L1→L3 removes only 9 % of tokens; holder scrub v2 removes one token per record. | R01 R02 R03 R05 R09 R10 | ✔ token fingerprints |
 | B5 | **Memorisation probes skipped the likeliest memorisers.** E8v4 ran only on GPT-4.1-mini (both arms) and GPT-4.1 (no-evidence arm); never on GPT-5.4 / GPT-5.4-mini; E5 closed-book is dev-only. The "no-evidence" arm still shows ≈260 tokens of item content (titles, dates, dimensions, holders) — a period-matching task, not a memory-only probe. | R03 R05 R10 | ✔ ledger (259.5 vs 335.4 tok/call) |
 | B6 | **`e10_regate` is an undisclosed post-hoc degree of freedom** run after every E10 job; if its rule was tuned on outcomes, all headline numbers are optimistic. | R01 R04 R07 R10 | ✔ follow_up column; ◌ rule |
-| B6b | **Possible duplicate test prompts.** The harness cache logs exactly 3 hits on every 294-call L1 test run across all four models, 2 on every L3-H / L5 test run — the same prompt recurring within a run points to 2–3 duplicate or near-duplicate query records (or identical shortlists) in the test split. Small, but it must be resolved before CIs are quoted. | R09 | ✔ `cache_hits` column, model-independent |
+| B6b | **Duplicate prompts of four kinds.** The harness cache logs exactly 3 hits on every 294-call L1 test run across all four models and 2 on every L3-H / L5 test run (2–3 duplicate test queries or identical shortlists); 8 hits in the L3-H2 dev run (records that differ *only* by holder → near-duplicate records in the ground truth); 135/2,344 in the pointwise run (duplicate query–candidate pairs); 47/295 in the deep-research harness (the agent loops). None is analysable from the export because the cache key is not logged. Small in count, but it must be resolved before CIs are quoted. | R09, red-team practitioner | ✔ `cache_hits` column, model-independent |
 | B7 | **Reproducibility.** All calls via a paid relay at ≈4.4× list prices; GPT-5.4 was served under two labels on every GPT-5.4 run (pinned `gpt-5.4-2026-03-05` plus 4–31 % of calls under the unpinned alias `gpt-5.4`; e.g. 73/294 on the L1 test run); GPT-5.4 prices "estimated"; one replicate in the whole grid (GPT-4.1-mini, L1, dev). | R08 R09 R10 | ✔ served_as field |
 
 ## 3. Major issues by theme (each named by 2–3 reviewers)
@@ -90,7 +90,10 @@ discovery of the confound.
 | reviewer request | artefact here |
 | --- | --- |
 | power / minimum detectable difference for n = 80 / 294, clustering | `sim/power_analysis.py` → `sim/results/POWER.md`, `figures/sim/S7` |
-| compute-matched comparison of policies (cascade, adaptive K, routing, SC, abstention) | `sim/reunion_sim.py` → `sim/results/RUNLOG.md`, `figures/sim/S1–S3, S8` |
+| compute-matched comparison of policies at matched operating points (fusion, read-less, cascade, routing, SC, abstention; no-LLM null) | `sim/reunion_sim.py` (v2) → `sim/results/RUNLOG.md`, `figures/sim/S1–S3, S8`, decision table in `sim/README.md` |
+| ensemble-level metrics, cluster bootstrap, paired tests, un-mixing, risk–coverage, position bias — as code | `tools/eval_toolkit.py` (self-tested), `tools/adapters/README.md` |
+| evaluation-unit divergence, forking-paths optimism, shuffled-order control | `sim/measurement_sim.py` → `figures/sim/S9–S11`, `sim/results/MEASUREMENT.md` |
+| pre-registration (with disclosure of seen comparisons), runbook, paper outline | `docs/05`, `docs/06`, `docs/07` |
 | memorised queries flatten the ladder → stratify by the forced-choice probe | `figures/sim/S5` |
 | risk–coverage / abstention | `figures/sim/S6` |
 | reasoning tax, cost of each road, dev→test cost prediction | `figures/real/R2, R3, R7` |
@@ -120,3 +123,22 @@ Costs use the real per-call rates (`figures/real/R3`). "Free" = no API calls.
 10. **~$3 — cost-matched self-consistency**: 5 × GPT-4.1-mini vs 1 × GPT-4.1 at L1 and L5.
 11. **~$0 + GPU minutes — CLIP/SigLIP/DINOv2 cosine baseline on the E16 shortlists**; report oracle recall@8.
 12. **Datasheet + licence audit per Commons file + sensitivity statement** before any release.
+
+
+## 7. Round 2 — red-team of this repository's own deliverables (`docs/reviews/redteam_*.md`)
+
+Four adversarial reports were commissioned against round 1's outputs. Their findings changed the
+simulation and the redesign materially; the headline corrections are recorded here so that the
+history is visible.
+
+| report | key finding | what changed |
+| --- | --- | --- |
+| `redteam_sim_code_review.md` | The v1 comparison was at a fixed posterior threshold under a 5.8 % prior — different operating points per policy; the retriever posterior and the controller's confidence were oracles; a zero-extra-cost baseline (listwise + retriever-informed prior) was missing and, when added, dominates; pointwise cost was level-blind; SC correlation was 0.75 not 0.5; "87 %/95 % of worlds" was a winner's-curse statistic; M5's price was ~2× too optimistic. | `sim/reunion_sim.py` rewritten (v2): matched operating points on held-out seeds, model-specific and word/record-keyed memory, retriever mis-calibration and confidence-noise knobs, new baselines, fixed costs, three-way seed split in the sweep, t-quantile CIs. **Result: fusing the retriever score into the LLM decision is the dominant mechanism when retriever and LLM errors are independent, and worthless or harmful when they are correlated; "read less" is a smaller, more robust gain; two-model cascades win only where errors are correlated *and* lists dilute; in 15 % of worlds today's design is already optimal; at L5 the retriever alone beats the flagship in half the worlds.** |
+| `redteam_ac_rescore.md` | The redesign mixed the measurement with the system (evidence escalation makes the rung a dependent variable); under the v1 memory model the L5 screen settled *memorised* queries; the un-mixing estimator is unidentified with a noisy probe; pre-registration after exposure needs disclosure; the $100 runbook bought old-schema rungs. S1 (nothing new run) Overall 4; S2 (next $100 run as hoped) Overall 6. | `docs/04` v2 separates deliverables A and B; adds the word- vs record-keyed memory test (E8 arm at L5-only evidence); stratify-don't-back-out; `docs/05` gains a disclosure section, equivalence margins, a stopping rule; `docs/06` gains a schema-decision gate. |
+| `redteam_philosophy_skeptic.md` | 無為而治 is *Analects* 15.5, not Laozi; 大道至簡 is not classical; most pairings were post-hoc labels. Concrete additions: monotonicity assertion per prompt, the no-LLM null as first table row, a stopping rule for the experiment, field-swap counterfactuals, canaries, three-way output with an elicited loss ratio. | `docs/04` §0 keeps two sentences (Daodejing 48 for the ladder; *Analects* 2.17–18 for the output); all mechanisms presented on engineering grounds; the six suggested mechanisms adopted (§2.1, §2.4, §2.5, §2.6, §2.7, M5). |
+| `redteam_practitioner.md` | GPT-5 rejects temperature (no sampling replicates); `--dims-permute` permutes dimensions not positions; four kinds of cache hit; relay rationing; an N0–N10 decision tree with per-node costs; a per-call logging spec. | `docs/06` updated (schema gate, Node 0 checks, `--shuffle-seed` for GPT-5.4 replicates, logging table); B6b above expanded. |
+
+Round-2 scoring of the revised package (red-team AC): **S1 = 4/10** if nothing new is run and the
+redesign is submitted as the method section; **S2 = 6/10** (weak accept as a measurement paper) if the
+next-$100 list is run and comes out as hoped. Both are below the round-1 "7 if …" conditionals because
+the AC counts the v2 schema as orphaning the existing test rungs until they are re-run (≈ $74).
