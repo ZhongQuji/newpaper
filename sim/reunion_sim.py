@@ -235,6 +235,55 @@ def pol_cascade(w, y, r, rem, level, rng, band=0.3, cheap="mini", strong="flagsh
     return pred, pt_cheap + pt_strong.mean(), OUT_TOKENS[cheap] + OUT_TOKENS[strong] * (n_unc > 0).mean(), usd, calls, (n_unc > 0).mean()
 
 
+def pol_cascade_evidence(w, y, r, rem, rng, band=0.4, cheap="mini", strong="flagship", lo="L5", hi="L1"):
+    """Evidence escalation (M5): the cheap model screens all K at the austere level `lo`; only the
+    uncertain band is re-judged by the strong model at the rich level `hi`. Cost mixes the two levels."""
+    prior = np.mean(y)
+    e1, d1 = llm_evidence(w, y, rem, lo, cheap, rng)
+    p1 = llm_posterior(e1, d1, prior, w.overconfidence)
+    uncertain = np.abs(p1 - 0.5) < band
+    n_unc = uncertain.sum(axis=1)
+    e2, d2 = llm_evidence(w, y, rem, hi, strong, rng, k_eff=np.maximum(n_unc, 1))
+    p2 = llm_posterior(e2, d2, prior, w.overconfidence)
+    pred = np.where(uncertain, p2 > 0.5, p1 > 0.5)
+    pt_cheap = FIXED_PROMPT + per_cand_tokens(lo) * w.K
+    pt_strong = np.where(n_unc > 0, FIXED_PROMPT + per_cand_tokens(hi) * n_unc, 0.0)
+    usd = cost(cheap, pt_cheap, OUT_TOKENS[cheap]) + cost(strong, pt_strong, np.where(n_unc > 0, OUT_TOKENS[strong], 0)).mean()
+    calls = 1 + (n_unc > 0).mean()
+    return pred, pt_cheap + pt_strong.mean(), OUT_TOKENS[cheap] + OUT_TOKENS[strong] * (n_unc > 0).mean(), usd, calls, (n_unc > 0).mean(), uncertain.mean()
+
+
+def pol_retriever_prune(w, y, r, rem, level, model, rng, thr=0.02):
+    """大道至简 — no cheap model at all: drop candidates whose calibrated retriever posterior is < thr,
+    then one listwise call of `model` over the survivors (any position, not just a prefix)."""
+    prior = np.mean(y)
+    keep = retriever_posterior(w, r) >= thr
+    n = keep.sum(axis=1)
+    e, d = llm_evidence(w, y, rem, level, model, rng, k_eff=np.maximum(n, 1))
+    post = llm_posterior(e, d, prior, w.overconfidence)
+    pred = np.where(keep, post > 0.5, False)
+    pt = np.where(n > 0, FIXED_PROMPT + per_cand_tokens(level) * n, 0.0)
+    ct = np.where(n > 0, OUT_TOKENS[model], 0)
+    return pred, pt.mean(), ct.mean(), cost(model, pt, ct).mean(), (n > 0).mean(), n.mean()
+
+
+def pol_cascade_evidence_reject_only(w, y, r, rem, rng, thr=0.05, cheap="mini", strong="flagship", lo="L5", hi="L1"):
+    """Asymmetric evidence escalation: the cheap austere screen may only REJECT (p̂ < thr); every
+    survivor is judged by the strong model at the rich level."""
+    prior = np.mean(y)
+    e1, d1 = llm_evidence(w, y, rem, lo, cheap, rng)
+    p1 = llm_posterior(e1, d1, prior, w.overconfidence)
+    keep = p1 >= thr
+    n = keep.sum(axis=1)
+    e2, d2 = llm_evidence(w, y, rem, hi, strong, rng, k_eff=np.maximum(n, 1))
+    p2 = llm_posterior(e2, d2, prior, w.overconfidence)
+    pred = np.where(keep, p2 > 0.5, False)
+    pt1 = FIXED_PROMPT + per_cand_tokens(lo) * w.K
+    pt2 = np.where(n > 0, FIXED_PROMPT + per_cand_tokens(hi) * n, 0.0)
+    usd = cost(cheap, pt1, OUT_TOKENS[cheap]) + cost(strong, pt2, np.where(n > 0, OUT_TOKENS[strong], 0)).mean()
+    return pred, pt1 + pt2.mean(), OUT_TOKENS[cheap] + OUT_TOKENS[strong] * (n > 0).mean(), usd, 1 + (n > 0).mean(), n.mean()
+
+
 def pol_route(w, y, r, rem, level, rng, theta=0.25, cheap="mini", strong="flagship"):
     """按需分配 — cheap model answers; if its least-confident decision has margin < theta,
     the whole query is escalated to the strong model (need-based budget per query)."""
@@ -308,6 +357,19 @@ def run_all(w: World, seeds: int) -> pd.DataFrame:
                 pred, pt, ct, usd, calls, frac = pol_cascade(w, y, r, rem, level, rng, band=band)
                 f1, p, rc, ex = metrics(pred, y)
                 rows.append(Result(f"cascade mini→flagship band={band}", level, "mini+flagship", f1, p, rc, ex, pt, ct, usd, calls, seed=s, extra=f"strong_call_frac={frac:.2f}"))
+            for thr in (0.02, 0.05):
+                pred, pt, ct, usd, calls, nkeep = pol_retriever_prune(w, y, r, rem, level, "flagship", rng, thr=thr)
+                f1, p, rc, ex = metrics(pred, y)
+                rows.append(Result(f"retriever-prune p≥{thr} → flagship", level, "flagship", f1, p, rc, ex, pt, ct, usd, calls, seed=s, extra=f"mean_kept={nkeep:.1f}"))
+            if level == "L1":
+                pred, pt, ct, usd, calls, nkeep = pol_cascade_evidence_reject_only(w, y, r, rem, rng, thr=0.05)
+                f1, p, rc, ex = metrics(pred, y)
+                rows.append(Result("evidence-cascade reject-only mini@L5 p<0.05 → flagship@L1", level, "mini+flagship", f1, p, rc, ex, pt, ct, usd, calls, seed=s, extra=f"mean_kept={nkeep:.1f}"))
+                for band in (0.4, 0.45):
+                    pred, pt, ct, usd, calls, frac, cand_frac = pol_cascade_evidence(w, y, r, rem, rng, band=band)
+                    f1, p, rc, ex = metrics(pred, y)
+                    rows.append(Result(f"evidence-cascade mini@L5→flagship@L1 band={band}", level, "mini+flagship", f1, p, rc, ex, pt, ct, usd, calls, seed=s,
+                                       extra=f"strong_call_frac={frac:.2f} escalated_cands={cand_frac*w.K:.1f}"))
             for theta in (0.15, 0.25, 0.35):
                 pred, pt, ct, usd, calls, frac = pol_route(w, y, r, rem, level, rng, theta=theta)
                 f1, p, rc, ex = metrics(pred, y)
@@ -335,7 +397,7 @@ def fig_pareto(summary: pd.DataFrame, level: str, fname: str):
               "mini-thinking": fs.MODEL_COLORS["xj-gpt-5.4-mini"], "mini+flagship": fs.OKABE_ITO["green"]}
     for _, r in d.iterrows():
         ax.errorbar(r.usd_per_query * 100, r.f1, yerr=r.f1_ci95, fmt=markers[r.model], color=colors[r.model], ms=5, capsize=1.5, lw=0.8, mec="black", mew=0.4)
-        lab = r.policy.replace("listwise ", "LW ").replace("adaptive-K ", "aK ").replace("self-consistency", "SC").replace("cascade mini→flagship ", "cascade ").replace("route mini→flagship ", "route ")
+        lab = r.policy.replace("listwise ", "LW ").replace("adaptive-K ", "aK ").replace("self-consistency", "SC").replace("cascade mini→flagship ", "cascade ").replace("route mini→flagship ", "route ").replace("evidence-cascade mini@L5→flagship@L1 ", "evid-cascade L5→L1 ").replace("evidence-cascade reject-only mini@L5 p<0.05 → flagship@L1", "evid-cascade reject-only L5→L1").replace("retriever-prune ", "r-prune ")
         ax.annotate(lab, (r.usd_per_query * 100, r.f1), xytext=(4, 2), textcoords="offset points", fontsize=5.4, color=colors[r.model])
     # Pareto frontier
     dd = d.sort_values("usd_per_query")
@@ -479,13 +541,14 @@ def fig_sweep(sw: pd.DataFrame, fname: str):
     ax.axhline(0, color="grey", lw=0.8)
     # (c) best family at equal budget, by dilution
     ax = axes[2]
-    fam = sw.best_policy_at_budget.str.extract(r"^(mini\+flagship · cascade|mini\+flagship · route|flagship · adaptive-K|flagship · listwise K=10|flagship · listwise K=30|mini · pointwise)")[0]
-    fam = fam.map({"mini+flagship · cascade": "cascade mini→flagship", "mini+flagship · route": "route mini→flagship", "flagship · adaptive-K": "flagship adaptive-K",
+    fam = sw.best_policy_at_budget.str.extract(r"^(mini\+flagship · evidence-cascade|mini\+flagship · cascade|mini\+flagship · route|flagship · adaptive-K|flagship · retriever-prune|flagship · listwise K=10|flagship · listwise K=30|mini · pointwise)")[0]
+    fam = fam.map({"mini+flagship · cascade": "cascade mini→flagship (same level)", "mini+flagship · evidence-cascade": "evidence cascade mini@L5→flagship@L1",
+                   "mini+flagship · route": "route mini→flagship", "flagship · adaptive-K": "flagship adaptive-K", "flagship · retriever-prune": "flagship retriever-prune",
                    "flagship · listwise K=10": "flagship listwise K=10", "flagship · listwise K=30": "today's design", "mini · pointwise": "mini pointwise"})
     ct = pd.crosstab(sw.beta_dilution, fam, normalize="index") * 100
-    order = ["cascade mini→flagship", "flagship adaptive-K", "flagship listwise K=10", "route mini→flagship", "mini pointwise", "today's design"]
+    order = ["cascade mini→flagship (same level)", "evidence cascade mini@L5→flagship@L1", "flagship adaptive-K", "flagship retriever-prune", "flagship listwise K=10", "route mini→flagship", "mini pointwise", "today's design"]
     ct = ct.reindex(columns=[c for c in order if c in ct.columns]).fillna(0)
-    cols = [fs.OKABE_ITO["green"], fs.OKABE_ITO["blue"], fs.OKABE_ITO["sky"], fs.OKABE_ITO["purple"], fs.OKABE_ITO["orange"], "lightgrey"]
+    cols = [fs.OKABE_ITO["green"], "#66C2A5", fs.OKABE_ITO["blue"], "#4C72B0", fs.OKABE_ITO["sky"], fs.OKABE_ITO["purple"], fs.OKABE_ITO["orange"], "lightgrey"]
     bottom = np.zeros(len(ct))
     for c, col in zip(ct.columns, cols):
         ax.bar([str(b) for b in ct.index], ct[c], bottom=bottom, color=col, label=c, width=0.6, zorder=2)
@@ -493,8 +556,8 @@ def fig_sweep(sw: pd.DataFrame, fname: str):
     ax.set_xlabel("list-dilution β"); ax.set_ylabel("% of worlds where best at ≤ budget")
     ax.set_title("(c) Who wins at today's budget", loc="left", fontsize=7.5)
     handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=6, fontsize=6, bbox_to_anchor=(0.5, -0.02), frameon=False)
-    fig.tight_layout(w_pad=1.6, rect=[0, 0.07, 1, 1])
+    fig.legend(handles, labels, loc="lower center", ncol=4, fontsize=6, bbox_to_anchor=(0.5, -0.04), frameon=False)
+    fig.tight_layout(w_pad=1.6, rect=[0, 0.11, 1, 1])
     fs.save(fig, FIG / fname)
 
 

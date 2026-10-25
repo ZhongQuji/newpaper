@@ -1,9 +1,9 @@
 # Simulation run log
 
-- started: 2026-10-25 09:17:06 UTC
+- started: 2026-10-25 09:25:59 UTC
 - world: `{"Q": 3000, "K": 30, "member_probs": [0.15, 0.35, 0.25, 0.13, 0.08, 0.04], "retriever_dprime": 1.5, "p_mem": 0.3, "dprime_mem": 4.0, "dprime_level": [["L1", 2.4], ["L3", 2.0], ["L5", 1.3], ["L6", 1.0]], "model_quality": [["mini", 0.75], ["flagship", 1.0], ["mini-thinking", 0.9]], "beta_dilution": 0.06, "pointwise_threshold_jitter": 0.35, "rho_sc": 0.5, "rho_models": 0.5, "overconfidence": 1.0, "seed": 0}`
 - seeds: 8, queries per seed: 3000
-- elapsed: 5.0 s
+- elapsed: 5.5 s
 
 ## Headline table (mean over seeds; coverage = 1 policies)
 
@@ -18,10 +18,15 @@
 | mini | listwise K=30 | 0.506 ± 0.008 | 0.808 | 0.369 | 0.326 | 0.39 | 1.00 |
 | mini+flagship | cascade mini→flagship band=0.2 | 0.588 ± 0.003 | 0.898 | 0.437 | 0.381 | 0.78 | 1.57 |
 | mini+flagship | cascade mini→flagship band=0.3 | 0.637 ± 0.004 | 0.907 | 0.491 | 0.414 | 0.94 | 1.78 |
+| mini+flagship | evidence-cascade mini@L5→flagship@L1 band=0.4 | 0.607 ± 0.004 | 0.867 | 0.467 | 0.399 | 0.98 | 1.91 |
+| flagship | retriever-prune p≥0.05 → flagship | 0.649 ± 0.004 | 0.940 | 0.495 | 0.403 | 1.01 | 1.00 |
 | flagship | listwise K=10 | 0.655 ± 0.003 | 0.929 | 0.506 | 0.407 | 1.07 | 1.00 |
 | mini+flagship | cascade mini→flagship band=0.4 | 0.687 ± 0.004 | 0.890 | 0.560 | 0.447 | 1.12 | 1.92 |
-| mini+flagship | route mini→flagship θ=0.15 | 0.602 ± 0.003 | 0.844 | 0.467 | 0.371 | 1.28 | 1.45 |
+| mini+flagship | route mini→flagship θ=0.15 | 0.603 ± 0.006 | 0.844 | 0.469 | 0.369 | 1.28 | 1.45 |
+| mini+flagship | evidence-cascade mini@L5→flagship@L1 band=0.45 | 0.671 ± 0.005 | 0.844 | 0.556 | 0.431 | 1.28 | 1.96 |
+| mini+flagship | evidence-cascade reject-only mini@L5 p<0.05 → flagship@L1 | 0.667 ± 0.003 | 0.845 | 0.551 | 0.427 | 1.32 | 1.99 |
 | mini-thinking | listwise K=10 | 0.605 ± 0.005 | 0.925 | 0.450 | 0.380 | 1.32 | 1.00 |
+| flagship | retriever-prune p≥0.02 → flagship | 0.677 ± 0.003 | 0.898 | 0.543 | 0.427 | 1.33 | 1.00 |
 | mini | pointwise ×30 | 0.577 ± 0.006 | 0.801 | 0.451 | 0.370 | 1.35 | 30.00 |
 | flagship | adaptive-K τ=0.1 | 0.672 ± 0.004 | 0.887 | 0.541 | 0.420 | 1.41 | 1.00 |
 | mini-thinking | adaptive-K τ=0.1 | 0.622 ± 0.005 | 0.880 | 0.481 | 0.391 | 1.45 | 1.00 |
@@ -30,10 +35,10 @@
 | flagship | adaptive-K τ=0.05 | 0.669 ± 0.006 | 0.864 | 0.546 | 0.415 | 1.57 | 1.00 |
 | mini-thinking | listwise K=30 | 0.587 ± 0.003 | 0.800 | 0.464 | 0.349 | 1.66 | 1.00 |
 | flagship | adaptive-K τ=0.02 | 0.661 ± 0.005 | 0.842 | 0.545 | 0.401 | 1.74 | 1.00 |
-| mini+flagship | route mini→flagship θ=0.25 | 0.630 ± 0.003 | 0.828 | 0.509 | 0.384 | 1.74 | 1.68 |
+| mini+flagship | route mini→flagship θ=0.25 | 0.632 ± 0.004 | 0.831 | 0.510 | 0.385 | 1.74 | 1.68 |
 | mini | self-consistency n=5 | 0.515 ± 0.005 | 0.898 | 0.361 | 0.357 | 1.96 | 5.00 |
 | flagship | listwise K=30 | 0.641 ± 0.004 | 0.805 | 0.533 | 0.381 | 1.99 | 1.00 |
-| mini+flagship | route mini→flagship θ=0.35 | 0.645 ± 0.004 | 0.819 | 0.532 | 0.389 | 2.10 | 1.86 |
+| mini+flagship | route mini→flagship θ=0.35 | 0.644 ± 0.003 | 0.819 | 0.530 | 0.390 | 2.10 | 1.86 |
 | mini-thinking | pointwise ×30 | 0.663 ± 0.004 | 0.814 | 0.560 | 0.410 | 2.67 | 30.00 |
 | flagship | pointwise ×30 | 0.717 ± 0.003 | 0.831 | 0.630 | 0.452 | 6.93 | 30.00 |
 | mini-thinking | self-consistency n=5 | 0.612 ± 0.004 | 0.896 | 0.465 | 0.396 | 8.31 | 5.00 |
@@ -43,30 +48,32 @@
 
 | model | policy | F1 ± CI95 | P | R | exact-set | ¢/query | calls/query |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| mini | listwise K=10 | 0.364 ± 0.006 | 0.971 | 0.224 | 0.290 | 0.17 | 1.00 |
-| mini | adaptive-K τ=0.1 | 0.394 ± 0.008 | 0.944 | 0.249 | 0.311 | 0.20 | 1.00 |
-| mini | adaptive-K τ=0.05 | 0.399 ± 0.008 | 0.940 | 0.253 | 0.315 | 0.22 | 1.00 |
-| mini | adaptive-K τ=0.02 | 0.399 ± 0.009 | 0.929 | 0.254 | 0.311 | 0.24 | 1.00 |
-| mini | listwise K=30 | 0.396 ± 0.008 | 0.903 | 0.253 | 0.302 | 0.26 | 1.00 |
-| mini+flagship | cascade mini→flagship band=0.2 | 0.417 ± 0.009 | 0.940 | 0.268 | 0.329 | 0.40 | 1.22 |
-| mini+flagship | route mini→flagship θ=0.15 | 0.403 ± 0.008 | 0.920 | 0.258 | 0.312 | 0.44 | 1.13 |
-| mini+flagship | cascade mini→flagship band=0.3 | 0.433 ± 0.008 | 0.933 | 0.282 | 0.340 | 0.61 | 1.55 |
-| mini+flagship | route mini→flagship θ=0.25 | 0.413 ± 0.008 | 0.914 | 0.266 | 0.318 | 0.72 | 1.34 |
-| flagship | listwise K=10 | 0.400 ± 0.007 | 0.948 | 0.253 | 0.300 | 0.85 | 1.00 |
-| mini+flagship | cascade mini→flagship band=0.4 | 0.458 ± 0.007 | 0.911 | 0.306 | 0.349 | 0.90 | 1.91 |
-| flagship | adaptive-K τ=0.1 | 0.424 ± 0.007 | 0.915 | 0.276 | 0.318 | 1.02 | 1.00 |
-| flagship | adaptive-K τ=0.05 | 0.425 ± 0.007 | 0.902 | 0.278 | 0.316 | 1.11 | 1.00 |
-| flagship | adaptive-K τ=0.02 | 0.424 ± 0.007 | 0.894 | 0.278 | 0.315 | 1.19 | 1.00 |
-| mini-thinking | listwise K=10 | 0.382 ± 0.007 | 0.957 | 0.239 | 0.295 | 1.24 | 1.00 |
-| mini+flagship | route mini→flagship θ=0.35 | 0.418 ± 0.006 | 0.885 | 0.273 | 0.313 | 1.29 | 1.78 |
-| mini-thinking | adaptive-K τ=0.1 | 0.406 ± 0.008 | 0.934 | 0.259 | 0.314 | 1.30 | 1.00 |
-| mini | self-consistency n=5 | 0.405 ± 0.009 | 0.953 | 0.257 | 0.324 | 1.32 | 5.00 |
-| flagship | listwise K=30 | 0.416 ± 0.007 | 0.870 | 0.273 | 0.302 | 1.33 | 1.00 |
-| mini-thinking | adaptive-K τ=0.05 | 0.408 ± 0.008 | 0.923 | 0.262 | 0.314 | 1.33 | 1.00 |
-| mini | pointwise ×30 | 0.426 ± 0.008 | 0.912 | 0.278 | 0.333 | 1.35 | 30.00 |
-| mini-thinking | adaptive-K τ=0.02 | 0.408 ± 0.007 | 0.913 | 0.263 | 0.312 | 1.37 | 1.00 |
-| mini-thinking | listwise K=30 | 0.403 ± 0.008 | 0.882 | 0.261 | 0.299 | 1.41 | 1.00 |
-| mini-thinking | pointwise ×30 | 0.446 ± 0.006 | 0.876 | 0.299 | 0.337 | 2.67 | 30.00 |
-| flagship | self-consistency n=5 | 0.421 ± 0.007 | 0.941 | 0.271 | 0.329 | 6.63 | 5.00 |
-| flagship | pointwise ×30 | 0.465 ± 0.007 | 0.849 | 0.320 | 0.340 | 6.93 | 30.00 |
-| mini-thinking | self-consistency n=5 | 0.411 ± 0.009 | 0.950 | 0.262 | 0.327 | 7.07 | 5.00 |
+| mini | listwise K=10 | 0.365 ± 0.006 | 0.972 | 0.225 | 0.291 | 0.17 | 1.00 |
+| mini | adaptive-K τ=0.1 | 0.394 ± 0.008 | 0.948 | 0.249 | 0.311 | 0.20 | 1.00 |
+| mini | adaptive-K τ=0.05 | 0.397 ± 0.008 | 0.936 | 0.252 | 0.311 | 0.22 | 1.00 |
+| mini | adaptive-K τ=0.02 | 0.399 ± 0.009 | 0.924 | 0.255 | 0.310 | 0.24 | 1.00 |
+| mini | listwise K=30 | 0.393 ± 0.008 | 0.901 | 0.252 | 0.300 | 0.26 | 1.00 |
+| mini+flagship | cascade mini→flagship band=0.2 | 0.416 ± 0.007 | 0.937 | 0.268 | 0.327 | 0.40 | 1.21 |
+| mini+flagship | route mini→flagship θ=0.15 | 0.402 ± 0.009 | 0.921 | 0.258 | 0.312 | 0.44 | 1.13 |
+| mini+flagship | cascade mini→flagship band=0.3 | 0.433 ± 0.008 | 0.938 | 0.281 | 0.339 | 0.61 | 1.54 |
+| mini+flagship | route mini→flagship θ=0.25 | 0.412 ± 0.010 | 0.911 | 0.266 | 0.317 | 0.72 | 1.34 |
+| flagship | retriever-prune p≥0.05 → flagship | 0.398 ± 0.006 | 0.957 | 0.251 | 0.298 | 0.82 | 1.00 |
+| flagship | listwise K=10 | 0.403 ± 0.007 | 0.951 | 0.256 | 0.301 | 0.85 | 1.00 |
+| mini+flagship | cascade mini→flagship band=0.4 | 0.458 ± 0.008 | 0.916 | 0.306 | 0.352 | 0.90 | 1.91 |
+| flagship | retriever-prune p≥0.02 → flagship | 0.423 ± 0.006 | 0.927 | 0.274 | 0.319 | 0.98 | 1.00 |
+| flagship | adaptive-K τ=0.1 | 0.426 ± 0.007 | 0.918 | 0.277 | 0.318 | 1.02 | 1.00 |
+| flagship | adaptive-K τ=0.05 | 0.425 ± 0.007 | 0.908 | 0.278 | 0.319 | 1.11 | 1.00 |
+| flagship | adaptive-K τ=0.02 | 0.422 ± 0.009 | 0.889 | 0.277 | 0.313 | 1.19 | 1.00 |
+| mini-thinking | listwise K=10 | 0.381 ± 0.006 | 0.954 | 0.238 | 0.295 | 1.24 | 1.00 |
+| mini+flagship | route mini→flagship θ=0.35 | 0.421 ± 0.008 | 0.887 | 0.276 | 0.316 | 1.29 | 1.78 |
+| mini-thinking | adaptive-K τ=0.1 | 0.410 ± 0.009 | 0.934 | 0.262 | 0.317 | 1.30 | 1.00 |
+| mini | self-consistency n=5 | 0.405 ± 0.010 | 0.952 | 0.257 | 0.323 | 1.32 | 5.00 |
+| flagship | listwise K=30 | 0.412 ± 0.007 | 0.868 | 0.270 | 0.301 | 1.33 | 1.00 |
+| mini-thinking | adaptive-K τ=0.05 | 0.409 ± 0.007 | 0.921 | 0.263 | 0.312 | 1.33 | 1.00 |
+| mini | pointwise ×30 | 0.426 ± 0.009 | 0.912 | 0.278 | 0.333 | 1.35 | 30.00 |
+| mini-thinking | adaptive-K τ=0.02 | 0.406 ± 0.007 | 0.909 | 0.262 | 0.309 | 1.37 | 1.00 |
+| mini-thinking | listwise K=30 | 0.403 ± 0.007 | 0.886 | 0.261 | 0.301 | 1.41 | 1.00 |
+| mini-thinking | pointwise ×30 | 0.447 ± 0.006 | 0.875 | 0.300 | 0.338 | 2.67 | 30.00 |
+| flagship | self-consistency n=5 | 0.421 ± 0.009 | 0.943 | 0.271 | 0.328 | 6.63 | 5.00 |
+| flagship | pointwise ×30 | 0.467 ± 0.007 | 0.851 | 0.322 | 0.343 | 6.93 | 30.00 |
+| mini-thinking | self-consistency n=5 | 0.412 ± 0.008 | 0.952 | 0.263 | 0.328 | 7.07 | 5.00 |

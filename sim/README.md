@@ -45,27 +45,38 @@ experiments to run.
 | adaptive-K τ | before calling, read only as many shortlist positions as the retriever posterior says are worth reading (expected unread members < τ) | retriever-score gap rule; zero extra calls |
 | cascade mini→flagship (band) | cheap model judges all 30; only candidates with posterior within ±band of 0.5 go to the flagship in one short call | two-model pipeline |
 | route mini→flagship (θ) | cheap model answers; whole query escalates if its least-confident decision has margin < θ | need-based budget per query |
+| retriever-prune p≥thr → flagship | no cheap model: drop candidates whose calibrated retriever posterior is below thr (any position), one listwise call over the survivors | retriever-score threshold; zero extra calls |
+| evidence-cascade mini@L5→flagship@L1 (band / reject-only) | cheap model screens at the *austere* level; uncertain (or all non-rejected) candidates go to the flagship at the *full* level — model **and** evidence escalation (M5 in `docs/04`) | two-model, two-level pipeline |
 | self-consistency n=5 | 5 correlated samples, majority vote | `--replicate` ×5 |
 | abstain if min-margin < τ | answer only when every decision is confident | selective prediction |
 
 ## Headline findings (base world; `results/RUNLOG.md` has the full tables)
 
-1. **Today's design is rarely on the frontier.** In 86 % (L1) / 97 % (L5) of the 216 worlds some
-   policy beats flagship-listwise-K=30 at ≤ 105 % of its cost. Mean gain of the best such policy ≈ +0.05 F1 at ≈ 60–75 % of
-   the cost.
+1. **Today's design is rarely on the frontier.** In 87 % (L1) / 95 % (L5) of the 216 worlds some
+   policy beats flagship-listwise-K=30 at ≤ 105 % of its cost (today's design is the best choice in
+   17/432 cells). Mean gain of the best such policy ≈ +0.05–0.06 F1 at ≈ 63–77 % of the cost.
 2. **The cheapest improvement is to read less.** Adaptive-K (τ = 0.05) costs 70–90 % of K=30 and
    never loses more than 0.01 F1; with a good retriever (d' = 2) it *gains* +0.04 while costing
-   70 %. Plain K=10 is the best single-model policy in 74/432 cells.
-3. **Two models beat one.** The mini→flagship cascade with band 0.4 is the most frequent
-   equal-budget winner (192/432 cells), typically at 55–70 % of the flagship's cost. It stays the
-   winner when model errors are correlated (ρ = 0.7) and when models are over-confident (×1.4),
-   but its margin shrinks; it is *not* the winner when there is no list dilution (β = 0) — then
-   flagship adaptive-K / K=10 win.
+   70 %. Retriever-prune (p ≥ 0.02, any position) does the same with zero extra calls: in the base
+   world +0.036 F1 at 67 % of the cost — as good as the two-model cascade. Prefix-K=10 / adaptive-K /
+   retriever-prune together are the best single-model choice in 139/432 cells.
+3. **Two models beat one — when lists dilute.** The same-level mini→flagship cascade with band 0.4
+   is the most frequent equal-budget winner (170/432 cells), typically at 55–70 % of the flagship's
+   cost; it survives correlated model errors (ρ = 0.7) and over-confidence (×1.4) with a smaller
+   margin, and is *not* the winner when there is no list dilution (β = 0) — then adaptive-K /
+   retriever-prune / K=10 win (Fig. S8c).
+3b. **Evidence escalation is a cost–quality–robustness trade, not a free lunch.** Screening at L5 with
+   the mini and escalating to the flagship at L1 costs 49–64 % of today's design, but a symmetric
+   band of 0.4 *loses* 0.034 F1 (confident wrong rejections at the austere level never reach the
+   flagship). A wider band (0.45: +0.030 F1 at 64 %) or a reject-only screen (p̂ < 0.05: +0.026 at
+   66 %) fixes it. Its real attraction is that most decisions are then made from physical facts —
+   a per-decision memorisation measurement, not just a saving.
 4. **Pointwise is a bet on dilution.** Its +0.06 median gain over listwise exists only if long
-   lists degrade the model (β > 0); at β = 0 it is −0.00 ± 0.01 while costing 3.5×. The real
+   lists degrade the model (β > 0); at β = 0 it is −0.00 ± 0.01 while costing 3.5×. With strong
+   dilution (β = 0.12) the *mini* pointwise run becomes the equal-budget winner in 1/3 of worlds. The real
    system can measure β directly: run listwise with `--k 10` vs `--k 30` on the same queries.
-5. **Self-consistency is poor value here.** n = 5 costs 5× and gains a median +0.009 F1
-   (range −0.03 … +0.04); buy a better model or a cascade instead.
+5. **Self-consistency is poor value here.** n = 5 costs 5× and gains a median +0.011 F1
+   (range −0.04 … +0.05); buy a better model, a cascade, or simply read less instead.
 6. **Memorised queries flatten the ladder.** With p_mem = 0.3 the observed L1→L6 drop is roughly
    half the evidence-only drop (Fig. S5). The forced-choice probe should be used to stratify every
    ladder plot into memorised / non-memorised queries, not reported as a separate number.
