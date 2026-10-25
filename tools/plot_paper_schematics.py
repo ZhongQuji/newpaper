@@ -39,7 +39,7 @@ def arrow(ax, x0, y0, x1, y1, text=None, fontsize=6, color="#333333", lw=0.9, of
 
 def p1_pipeline():
     fs.apply_style()
-    fig, axes = plt.subplots(2, 1, figsize=(fs.DOUBLE_COL, 5.0), gridspec_kw={"height_ratios": [1, 2.4]})
+    fig, axes = plt.subplots(2, 1, figsize=(fs.DOUBLE_COL, 5.4), gridspec_kw={"height_ratios": [1, 2.6]})
     for ax in axes:
         ax.set_xlim(0, 100); ax.axis("off")
     F = 6.3
@@ -57,29 +57,22 @@ def p1_pipeline():
     box(ax, 89.5, 3, 10, 4, "regate\n(rule ?)", fc="#EEEEEE", ec="#999999", fontsize=F)
     ax.text(50, 0.5, "$0.020 / query (GPT-4.1)  ·  fixed K  ·  no abstention  ·  no verification  ·  title still shown at L5", ha="center", fontsize=6.3, color="dimgrey")
     # ---- v2
-    ax = axes[1]; ax.set_ylim(0, 24)
-    ax.text(0, 23.2, "(b) Proposed v2: read less, escalate only what is open, test every claim", fontsize=8.5, weight="bold", va="center")
-    box(ax, 0.5, 17, 13, 4, "query record", fc="#FFFFFF", fontsize=F)
-    arrow(ax, 13.5, 19, 17.5, 19)
-    box(ax, 17.5, 16.4, 21, 5.2, "retriever + calibrated\nscores; keep p ≥ 0.02\n(adaptive K)", fc="#E5F5E0", ec=fs.OKABE_ITO["green"], fontsize=F)
-    arrow(ax, 38.5, 19, 44.5, 19, "~16 of 30", offset=(0, 6))
-    box(ax, 44.5, 16.1, 29, 5.8, "Stage 1 · cheap screen (mini)\nL5 physical facts only\np̂(member) per candidate", fc="#DEEBF7", ec=fs.OKABE_ITO["blue"], fontsize=F)
-    arrow(ax, 59, 16.1, 59, 13.2)
-    box(ax, 38, 10.4, 42, 2.8, "p̂ < 0.05 → reject (final)      else → open band (~8 candidates)", fc="#FFFFFF", ec="#777777", fontsize=5.8)
-    arrow(ax, 59, 10.4, 59, 7.6)
-    box(ax, 36, 2.6, 46, 5.0, "Stage 2 · strong judge (flagship), L1 full record\nimages / open pool only if the VoI gate opens", fc="#FDE0DD", ec=fs.OKABE_ITO["vermilion"], fontsize=F)
-    arrow(ax, 82, 5.1, 84.5, 5.1)
-    box(ax, 84.5, 1.6, 15, 7.0, "Stage 3 · verify\ncite shown fields;\nchecker flags\nunshown facts;\nabstain if open", fc="#FFF5EB", ec=fs.OKABE_ITO["orange"], fontsize=5.5)
-    arrow(ax, 92.5, 8.6, 92.5, 11.6)
-    box(ax, 84.5, 11.6, 15, 5.2, "Stage 4 · ensemble\nclosure → clusters\n+ evidence dossier", fc="#F2F2F2", fontsize=5.5)
-    # side notes (prices from real token counts × fitted relay rates)
-    ax.text(1, 13.0, "≈ $0.0026 / query", fontsize=6.3, color=fs.OKABE_ITO["blue"])
-    ax.text(1, 11.9, "mini @ L5, all kept candidates", fontsize=5.7, color="dimgrey")
-    ax.text(1, 7.4, "≈ $0.0098 × ~40 % of queries", fontsize=6.3, color=fs.OKABE_ITO["vermilion"])
-    ax.text(1, 6.3, "flagship @ L1, open band only", fontsize=5.7, color="dimgrey")
-    ax.text(1, 3.6, "≈ $0.001–0.005 / query", fontsize=6.3, color=fs.OKABE_ITO["orange"])
-    ax.text(1, 2.5, "verification, per predicted member", fontsize=5.7, color="dimgrey")
-    ax.text(50, 0.3, "all-in ≈ $0.0075–0.0115 / query (−40 … −63 % vs today)  ·  share of decisions made from physical facts = a per-decision memorisation metric", ha="center", fontsize=6.2, color="dimgrey")
+    ax = axes[1]; ax.set_ylim(0, 25)
+    ax.text(0, 24.2, "(b) Proposed v2 system: fuse what the retriever knows, read less, say 'I do not know', verify under permutation", fontsize=8.5, weight="bold", va="center")
+    box(ax, 0.5, 18.2, 11, 4, "query record", fc="#FFFFFF", fontsize=F)
+    arrow(ax, 11.5, 20.2, 13.5, 20.2)
+    box(ax, 13.5, 17.2, 24, 6.0, "retriever + calibrated\nscores; keep p ≥ 0.02\n(or top-10) → read 10–16", fc="#E5F5E0", ec=fs.OKABE_ITO["green"], fontsize=F)
+    arrow(ax, 37.5, 20.2, 39.5, 20.2)
+    box(ax, 39.5, 16.4, 59.5, 7.6, "one flagship listwise call at the rung under test\n→ per-candidate P(yes): logprob or verbalised score,\nfused with the retriever prior:  logit P = logit P_llm + logit P_retr − logit π", fc="#FDE0DD", ec=fs.OKABE_ITO["vermilion"], fontsize=F)
+    arrow(ax, 69, 16.4, 69, 14.3)
+    box(ax, 13.5, 10.6, 85.5, 3.8, "three-way output, thresholds derived from an elicited loss ratio λ:\naccept (P ≥ a)   ·   defer to the curator with the evidence dossier (b ≤ P < a)   ·   reject", fc="#FFFFFF", ec="#777777", fontsize=5.9)
+    arrow(ax, 69, 10.6, 69, 9.3)
+    box(ax, 13.5, 4.9, 56, 4.4, "verify accepted members: cite the shown fields; run under L5-P so that a\ncorrect accept citing permuted dimensions = memory caught in the act", fc="#FFF5EB", ec=fs.OKABE_ITO["orange"], fontsize=5.9)
+    arrow(ax, 69.5, 7.1, 71.5, 7.1)
+    box(ax, 71.5, 4.9, 27.5, 4.4, "ensemble closure by correlation\nclustering (not transitive closure);\nreport the contradiction rate", fc="#F2F2F2", fontsize=5.6)
+    ax.text(0.5, 3.1, "cost ≈ 0.94–1.24 ¢/query (flagship, K=10 or prune, + prior) · ≈ 0.19 ¢ (mini variant) · vs 1.99 ¢ today — real token prices; quality: simulation only", fontsize=5.9, color="black")
+    ax.text(0.5, 1.8, "gates before adopting (b): the \\$0 fusion test on logged scores and the \\$1 K=10-vs-K=30 test; if both are null, keep (a) and spend on the measurement", fontsize=5.9, color="dimgrey")
+    ax.text(0.5, 0.5, "the ladder MEASUREMENT uses the fixed-rung system (a) at every rung; system (b) is evaluated end-to-end on its own quality–cost point, never pooled into it", fontsize=5.9, color="dimgrey")
     fs.save(fig, OUT / "P1_pipeline_today_vs_v2")
 
 
@@ -154,7 +147,7 @@ if __name__ == "__main__":
     p3_unmixing(); print("P3 ok")
     (OUT / "CAPTIONS.md").write_text(
         "# Captions for figures/paper\n\n"
-        "**P1_pipeline_today_vs_v2** — (a) today's reference system (one listwise flagship call over a fixed 30-candidate shortlist; prices and token counts from the real ledger). (b) the proposed v2 system of `docs/04_method_redesign.md`: adaptive K from calibrated retriever scores, a cheap austere-level screen that may only reject, a strong judge on the open band at the full level with a value-of-information gate for images / open-pool search, a grounded verification step with abstention, and ensemble closure. Prices are real token counts × fitted relay rates; quality claims are simulated (`sim/`).\n\n"
+        "**P1_pipeline_today_vs_v2** — (a) today's reference system (one listwise flagship call over a fixed 30-candidate shortlist; prices and token counts from the real ledger); it remains the fixed-rung system used for the ladder measurement. (b) the proposed v2 system of `docs/04_method_redesign.md` §3: calibrated retriever scores prune the shortlist, one flagship call returns per-candidate scores fused with the retriever prior, a three-way output derived from an elicited loss ratio, verification under dimension permutation, and correlation clustering. Prices are real token counts × fitted relay rates; quality claims are simulated and conditional on the two gates (`sim/README.md` decision table).\n\n"
         "**P2_nested_ladder_v2** — the proposed nested ladder. Right column: the closest rung in today's grid and its real mean prompt length (dev split). Note that today's L5 and L5-P still show the title; only L6 removes it, and L2-T is a subset-with-substitution (longer than L1).\n\n"
         "**P3_unmixing_schematic** — illustrative: the observed ladder is a mixture of a flat memorised stratum and a falling evidence-only stratum; stratifying by the evidence-free forced-choice probe recovers the true evidence drop. Shapes are schematic, not measured.\n",
         encoding="utf-8")
