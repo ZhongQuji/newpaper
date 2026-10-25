@@ -21,6 +21,6 @@
 | 294 | 0.3 | 0.058 |
 
 - reps per cell: 1500 (McNemar), 300 (bootstrap, B=400); base accuracy 0.60; λ=1.0
-- elapsed 282 s
+- elapsed 278 s
 
 Reading (computed from the table above): on the 80-query dev split a true drop must be about 0.15–0.18 (i.e. 15–18 accuracy points) before a paired McNemar test detects it with 80 % power; on the 294-query test split about 0.07–0.09. Pairing cancels the shared ensemble effect, so ICC barely changes the power of a *difference*; it does widen the CI of each level's *absolute* accuracy (second table), so leaderboard numbers must be bootstrapped over ensembles, not queries. Lower same-query correlation (ρ_pair) — i.e. noisier LLM sampling — costs power: report replicate runs.

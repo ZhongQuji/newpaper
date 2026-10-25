@@ -112,25 +112,29 @@ retriever errors independent of the LLM's (ρ = 0), record-keyed memory — give
 
 | policy (flagship class unless stated) | L1 F1 | L1 ¢/query | L5 F1 | L5 ¢/query |
 | --- | ---: | ---: | ---: | ---: |
-| today: listwise K=30 | 0.660 | 1.99 | 0.474 | 1.33 |
-| **listwise K=30 + retriever prior** (same prompt, same cost) | **0.761** | 1.99 | **0.635** | 1.33 |
-| listwise K=10 + retriever prior | 0.755 | 0.94 | — | — |
-| retriever-prune p≥0.02 + retriever prior | 0.774 | 1.24 | — | — |
-| listwise K=10 | 0.722 | 0.94 | 0.552 | 0.71 |
-| retriever-prune p≥0.02 | 0.722 | 1.24 | 0.538 | 0.88 |
-| cascade mini→flagship band 0.4 | 0.672 | 1.03 | 0.432 | 0.78 |
-| cascade reject-only | 0.701 | 1.21 | 0.475 | 1.01 |
-| evidence-cascade L5→L1 (reject-only) | 0.658 | 1.28 | — | — |
-| pointwise ×30 | 0.726 | 6.66 | 0.464 | 5.37 |
-| self-consistency n=5 | 0.760 | 9.96 | 0.427 | 6.63 |
-| mini: listwise K=10 + retriever prior | 0.639 | **0.19** | 0.529 | **0.14** |
-| no LLM: retriever score alone | 0.398 | 0 | 0.398 | 0 |
+| today: listwise K=30 | 0.67 | 1.99 | 0.48 | 1.33 |
+| **listwise K=30 + retriever prior** (same prompt, same cost) | **0.76** | 1.99 | **0.63** | 1.33 |
+| listwise K=10 + retriever prior | 0.75 | 0.94 | 0.63 | 0.71 |
+| retriever-prune p≥0.02 + retriever prior | 0.77 | 1.24 | 0.64 | 0.88 |
+| listwise K=10 | 0.73 | 0.94 | 0.56 | 0.71 |
+| retriever-prune p≥0.02 | 0.73 | 1.24 | 0.54 | 0.88 |
+| cascade mini→flagship band 0.4 | 0.68 | 1.03 | 0.43 | 0.79 |
+| cascade reject-only | 0.71 | 1.21 | 0.48 | 1.01 |
+| evidence-cascade L5→L1 (reject-only) | 0.66 | 1.28 | — | — |
+| pointwise ×30 | 0.73 | 6.66 | 0.51 | 5.37 |
+| self-consistency n=5 | 0.76 | 9.96 | 0.49 | 6.63 |
+| mini: listwise K=10 + retriever prior | 0.64 | 0.19 | 0.53 | 0.14 |
+| no LLM: retriever score alone | 0.39 | 0 | 0.39 | 0 |
+
+Two decimals on purpose: re-running with a different random stream moves most cells by ≤ 0.01 and
+the L5 pointwise / self-consistency cells by up to 0.05 (their tuned thresholds are unstable), so
+the third decimal is noise. Costs are exact given the token model.
 
 ### M1 — fuse the retriever score into the decision (zero extra cost; the largest gain *if* the retriever's errors are not the LLM's) **[sim]**
 Give the LLM's per-candidate P(member) a per-candidate prior from the calibrated retriever score
-instead of a flat prevalence prior. Base world: +0.10 F1 at L1 and +0.16 at L5 for the flagship at
-identical cost; the *mini* with the prior (0.63) nearly matches today's flagship (0.66) at a tenth of
-the price; the gain holds on the non-memorised stratum (0.56 → 0.70 at L1). **But the gain is a bet on
+instead of a flat prevalence prior. Base world: +0.09 F1 at L1 and +0.16 at L5 for the flagship at
+identical cost; the *mini* with the prior (0.63) nearly matches today's flagship (0.67) at a fifth of
+the price; the gain holds on the non-memorised stratum (0.58 → 0.70 at L1). **But the gain is a bet on
 error independence:** when the retriever's noise is the same item difficulty the LLM sees (ρ = 0.5),
 the L1 gain vanishes; at ρ = 0.8 it turns negative unless the retriever is strong (Fig. S8b). A lexical
 or embedding retriever over the *same* metadata the LLM reads is probably ρ > 0; an image-embedding or
@@ -148,7 +152,7 @@ measures β — `--k 10` vs `--k 30` on the same dev queries — is Node 1 of `d
 
 ### M3 — a second model only in one corner (demoted from v1)
 Under matched operating points no cascade or routing policy beats the single-model M1/M2 policies at
-equal cost in the base world (cascade band 0.4: 0.672 @ 1.03¢ vs K=10 0.722 @ 0.94¢), and routing
+equal cost in the base world (cascade band 0.4: 0.68 @ 1.03¢ vs K=10 0.73 @ 0.94¢), and routing
 escalates 78–94 % of queries once the margin is measured on candidates in play. In the sweep the
 *reject-only* cascade (mini screens, flagship judges survivors) is the best choice at budget only where
 ρ > 0 **and** β > 0 — correlated errors make the prior fusion useless and dilution makes a cheap screen
@@ -183,8 +187,8 @@ report the contradiction rate.
 
 ### System price, from the simulation's own outputs
 Recommended v2 reference = flagship, K = 10 or prune, + retriever prior: **≈ 0.94–1.24 ¢/query**
-versus 1.99 ¢ today (−38 … −53 %) **[sim cost, real token prices]**, with F1 +0.09 … +0.11 **[sim]**.
-Cheap variant = mini, K = 10, + retriever prior: ≈ 0.19 ¢ (−90 %) at F1 ≈ today's. v1's
+versus 1.99 ¢ today (−38 … −53 %) **[sim cost, real token prices]**, with F1 +0.08 … +0.10 in the base world **[sim]**.
+Cheap variant = mini, K = 10, + retriever prior: ≈ 0.19 ¢ (−90 %) at F1 ≈ today's (0.64 vs 0.67). v1's
 "$0.0075–0.0115, quality higher in 87–95 % of worlds" is withdrawn: the price assumed a 40 % escalation
 fraction the simulation never produced, and the percentage was an oracle statistic.
 

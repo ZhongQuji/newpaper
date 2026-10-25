@@ -70,12 +70,12 @@ seeds. Every headline is also reported on the non-memorised stratum.
 
 ## Findings (base world has ρ = 0 and record-keyed memory; the sweep qualifies every line)
 
-1. **The zero-cost no-LLM null is not trivial.** Retriever score alone: F1 0.40. At L5 it beats the
+1. **The zero-cost no-LLM null is not trivial.** Retriever score alone: F1 0.39. At L5 it beats the
    flagship's listwise K=30 in **51 % of swept worlds** (whenever d'_r ≥ 1.5 and the LLM's L5 evidence is
    weak). The first thing to establish on the real data is that the LLM beats the retriever at all at L5.
 2. **Fusing the retriever score into the LLM decision is the largest gain — when the two see different
-   things.** Base world (ρ = 0): flagship +0.10 F1 at L1, +0.16 at L5, at identical cost; the mini with the
-   prior (0.63) nearly matches today's flagship (0.66) at a tenth of the price. Sweep: median +0.046
+   things.** Base world (ρ = 0): flagship +0.09 F1 at L1, +0.16 at L5, at identical cost; the mini with the
+   prior (0.63) nearly matches today's flagship (0.67) at a fifth of the price. Sweep: median +0.046
    (10–90 % −0.04 … +0.21). At ρ = 0.5 the L1 gain vanishes (−0.004) and at ρ = 0.8 it turns negative
    (−0.026) unless the retriever is strong (d'_r = 2: +0.09 even at ρ = 0.8); at L5 it stays positive at
    every ρ (Fig. S8b). *Real test:* fit the fused decision on dev from logged P(yes) and retriever scores — $0.
