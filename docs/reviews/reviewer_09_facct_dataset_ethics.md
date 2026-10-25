@@ -1,0 +1,46 @@
+# Reviewer 09 — FAccT / NeurIPS Datasets & Benchmarks (ethics, documentation and release reviewer)
+
+## Summary of the submission as I understand it
+The project builds a benchmark of dispersed cultural-heritage ensembles (altarpiece panels, album and manuscript leaves) from Wikidata, Wikimedia Commons, NGA open data, Wikipedia and open-access literature, and asks LLM/MLLM agents to pick a query object's fellow members from a 30-candidate shortlist. The central manipulation is an information ladder (L1 full record → L6 physical facts minus title) with one ablation per leakage channel, meant to separate evidence use from memorisation. Four OpenAI-family models have complete ledgers (65 runs, 9,178 calls, $100.07, 17.7 h); eleven others ran without ledgers. No accuracy numbers, datasheet, licence audit or release package are in the material I was given, so my critique is conditional.
+
+## Scores (1–10) with one-line justification each
+- Novelty: 6 — a leakage-aware ladder for reunion is new in CH-ML; sources and listwise agent are standard.
+- Technical soundness: 5 — well-chosen controls, but level construct validity is unverified (L1→L3 removes only 9 % of prompt tokens; L2-T was redefined mid-campaign).
+- Evaluation rigour: 4 — no numbers; the test-split ladder is complete for no model; L5-P and L6 exist only on 80 dev queries of one model.
+- Clarity (of the design, as reconstructed): 6 — levels and flags are legible from the ledger; field sets, ground truth and metric are undocumented.
+- Impact / significance: 6 — potentially high for provenance research, capped by Western-canon coverage and unresolved redistribution rights.
+- Overall: 4 — not releasable as a D&B artefact today; a credible path to 7 exists via items 1–5 below.
+
+## Strengths
+- Provenance-aware by construction: `custody_events`, `membership_evidence`, `temporal_ladder`, `near_duplicates`, `media_integrity` and `release_validation` reports exist by name — most CH benchmarks have none.
+- Exemplary compute transparency: per-call tokens, cost and wall time for all 9,178 calls; served-model audit with 0 mismatches.
+- One ablation per leakage channel (`--holder-scrub`, `--mask-creator`, `--withhold-title`, `--dims-permute`, `--both-orders`) is exactly the "known shortcuts" section a datasheet needs.
+- The metadata core (Wikidata CC0, NGA open data CC0) is genuinely redistributable, so a tiered release is feasible.
+
+## Weaknesses
+1. **BLOCKER — Redistribution rights undemonstrated.** Wikidata and NGA open-access images are CC0. Commons files are licensed per file (CC0 / CC BY / CC BY-SA / PD-Art / PD-old); PD-Art rests on US *Bridgeman* reasoning and is contested or fee-bearing elsewhere (Italy's *Codice dei beni culturali* for state-owned Uffizi or Brera panels). `wikipedia_dump` text is CC BY-SA 4.0, whose share-alike clause contaminates a CC0 release; `oa_fulltext` and `literature_enrich` are often CC BY-NC-ND, which forbids redistributing passages. Show a per-record licence histogram and a `release_validation` rule that fails any file lacking a machine-readable licence.
+2. **BLOCKER — No datasheet / data card.** Needed: ensembles, members per ensemble, holder countries, periods, object types; SPARQL queries and crawl dates; ground-truth definition (Wikidata P361/P527? curated literature?) and its error rate from `quality_audit`; shortlist construction and recall@30; exact field set per level; maintenance plan; Croissant metadata.
+3. **MAJOR — Provenance sensitivity and misuse.** Dispersal is usually the trace of suppression sales, dealer dismemberment, colonial removal (Dunhuang via Stein and Pelliot; Benin) or 1933–45 forced sales. A tool whose verb is "reunion" and whose output is a membership decision with a confidence will be cited to assert or deny restitution claims; `custody_events` may also name living owners, dealers or heirs (GDPR). Required: a per-ensemble `contested_provenance` flag, redaction of natural persons, and an intended-use statement ("hypothesis generation for scholars, not evidence of title or original unity").
+4. **MAJOR — Western-canon bias.** NGA plus English-language Wikidata/Commons over-represents Italian and Netherlandish altarpieces; Dunhuang manuscripts split across London, Paris, Beijing and St Petersburg, dismembered Chinese albums, Persian *muraqqaʿ* and Shahnama leaves and Buddhist sutras are under-represented, and non-Latin titles change what "title leak" means. The memorisation finding then concerns famous Western objects. Report composition by region/script/period and stratify every result by a fame proxy (`commons_views`, `nga_views` exist).
+5. **MAJOR — Reproducibility through a paid relay.** All calls went through `xiaojingai`; GPT-5.4 was served under two labels (`gpt-5.4-2026-03-05` 221 / unpinned `gpt-5.4` 73 on the L1 test row; 203/91 at L3-H; 210/84 at L5); GPT-5.4 prices are "estimated"; GPT-5.4-mini has no temperature control and hidden reasoning tokens; `api_errors=4` killed the L5-P test run (`20261024_234820`), and the campaign log shows Gemini 3 Pro and Claude Opus 4.6 failing the same job. Publish request/response archives so every table can be re-scored offline.
+6. **MINOR — Versioning drift.** L2-T ran on 5 dev / 17 test queries at 1,730 tok/call on 10-23 (`20261023_034308`, `20261023_034328`) and on 32 / 91 at 2,316 tok/call on 10-24; `--inputs v2`, `--holder-scrub v2`, `--dims-permute 20261024` are further unversioned variants. `cache_hits=3` on every L1 test row and 2 on the L3-H/L5 test rows suggest 2–3 duplicate test prompts despite `near_duplicates`.
+7. **MINOR — Environmental reporting.** $100.07, 17.7 h and 16.6 M tokens are disclosed; no energy/CO2e estimate, and GPT-5.4-mini's reasoning-inflated 1.02 M completion tokens (70 % of all completion tokens from 20 % of calls) are the dominant avoidable cost.
+
+## Experiments or artefacts that would change my score
+1. Licence audit table (source × licence × count for records, images, texts) and a tiered release: CC0 metadata core; images as URLs + perceptual hashes unless CC0/PD; text as DOI + offsets unless CC BY. *Convinces me:* every shipped file carries a machine-readable licence and the ladder reproduces on the shippable subset within the test CI.
+2. Full datasheet plus a 50-ensemble manual audit of membership labels. *Convinces me:* label error ≤ 3 % and shortlist recall@30 per level.
+3. Provenance sensitivity audit (1933–45 custody gaps, colonial-era removal, named natural persons), policy text, release flag. *Convinces me:* flagged ensembles are excluded from the public test split or carry the flag.
+4. Fame-stratified ladder (terciles of `commons_views`/pageviews), a free re-analysis. *Convinces me:* if the L1→L6 drop concentrates in the top tercile the paper is about memorisation and should say so; if uniform, the evidence claim stands.
+5. Non-Western held-out set of ≥ 50 queries (IDP Dunhuang, dispersed Shahnama/muraqqaʿ leaves, sutra scrolls) at L1/L5/L6 on GPT-4.1-mini (≈ $0.004/call, < $1 per level) and GPT-5.4 (≈ $0.02/call, ≈ $1 per level). *Convinces me:* results inside the Western CI, or a scope qualifier in title and abstract.
+6. Offline replay archive of the 9,178 calls and a pinned-snapshot rerun of the GPT-5.4 L1 test ($5.91). *Convinces me:* a third party recomputes the headline table without API access; the 73 unpinned calls do not differ in decision distribution.
+7. Versioned release (`v1.0`: frozen splits, level definitions as code, checksums, changelog, canary string, test labels hashed) with the `release_validation` report attached.
+
+## Token-efficiency / cost critique
+- Wasteful: GPT-5.4-mini's reasoning tax ($33.19, 33 % of spend; $0.016–0.023/call against GPT-4.1-mini's $0.004) bought with no evidence that L1 needs reasoning; E16 on GPT-4.1 ($4.70/run, 3.1k tok/call) re-scores a 2B-model shortlist; E17 at L1 ($0.22/query, 25k tok) probes open-pool search at the leakiest level.
+- Cheap and missing: closed-book E5 on the test split ($0.17–$2.18 per model); L5-P and L6 test on GPT-4.1-mini (< $1 each); licence audit, fame stratification and duplicate check cost nothing; `fact_cards`-style compression could halve the 1,959-token L1 prompt.
+
+## One idea the authors have not tried
+Tag each ensemble's dispersal cause from `custody_events` (suppression or estate sale, dealer dismemberment, colonial removal, 1933–45 forced sale, unknown) and add level **L3-H′**: instead of scrubbing the holder, replace it with a plausible decoy holder (a museum owning other works by the same workshop). Compare L3 / L3-H / L3-H′ per dispersal cause. If agents follow the decoy, decisions rest on memorised who-owns-what rather than object evidence — precisely the failure mode that makes the tool dangerous in restitution contexts. Cost: 80 dev queries × 4 models ≈ $4.60 at ledger rates; implementation is a lookup table and one flag in `llm_reunion_agent.py`.
+
+## Confidence (1–5) and what I could not assess
+3. I saw file and flag names, token/cost ledgers and the campaign log — not the data, licence fields, `custody_events` content, any datasheet, or any accuracy number. My licence and provenance points are requirements to demonstrate, not findings of violation.
