@@ -1,0 +1,25 @@
+sweep…
+  sweep 72/648
+  sweep 144/648
+  sweep 216/648
+  sweep 288/648
+  sweep 360/648
+  sweep 432/648
+  sweep 504/648
+  sweep 576/648
+  sweep 648/648
+Traceback (most recent call last):
+  File "/workspace/sim/reunion_sim.py", line 675, in <module>
+    main()
+  File "/workspace/sim/reunion_sim.py", line 649, in main
+    fig_sweep(sw, "S8_sweep_sensitivity")
+  File "/workspace/sim/reunion_sim.py", line 519, in fig_sweep
+    m = g[col].mean(); lo = g[col].quantile(0.1); hi = g[col].quantile(0.9)
+        ~^^^^^
+  File "/home/ubuntu/.local/lib/python3.12/site-packages/pandas/core/groupby/generic.py", line 3002, in __getitem__
+    return super().__getitem__(key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/.local/lib/python3.12/site-packages/pandas/core/base.py", line 222, in __getitem__
+    raise IndexError(f"Column(s) {self._selection} already selected")
+IndexError: Column(s) ['rp_minus_lw', 'prune_minus_lw', 'k10_minus_lw', 'casc04_minus_lw'] already selected
+SWEEP_EXIT=1
