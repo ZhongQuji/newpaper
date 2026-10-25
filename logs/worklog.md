@@ -21,3 +21,4 @@ All times are Asia/Shanghai (UTC+8). One line per unit of work.
 | 2026-10-25 17:32:18 CST | DONE | figures/paper/P1 (pipeline today vs v2), P2 (nested ladder v2 annotated with real token fingerprints), P3 (un-mixing schematic) + CAPTIONS.md; three layout iterations each, visually inspected. |
 | 2026-10-25 17:39:29 CST | CHECK | Clean-room rebuild in /tmp/cleanroom_check (all derived outputs deleted, tools/run_all.sh re-run, 5m46s): runs_summary.md, RUNLOG.md, POWER.md byte-identical modulo timestamps → pipeline is deterministic and complete. |
 | 2026-10-25 17:39:29 CST | DONE | STATUS.md (done / not-done / open questions / caveats), README.md, requirements.txt, tools/run_all.sh written. |
+| 2026-10-25 17:40:43 CST | DONE | Branch pushed; PR opened. Artifacts copied to /opt/cursor/artifacts (18 figures, worklog, sim RUNLOG/POWER, real summary). |
