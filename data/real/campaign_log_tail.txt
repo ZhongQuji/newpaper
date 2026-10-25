@@ -1,0 +1,11 @@
+2026-10-24 22:31:01 campaign start pid 61756 plan configs\campaign_s45_l5perm_test.json: 3 stages, max_parallel 2
+2026-10-24 22:31:01 stage 1 started xj-gemini-3-pro pid 19292: E10_agent_L5P_test -> api_campaign_20261024_223101_stage1_xj-gemini-3-pro.out
+2026-10-24 22:31:01 stage 2 started xj-claude-opus-4.6 pid 13372: E10_agent_L5P_test -> api_campaign_20261024_223101_stage2_xj-claude-opus-4.6.out
+2026-10-24 23:48:09 stage 1 xj-gemini-3-pro finished rc=1
+2026-10-24 23:48:09 stage 3 started xj-gpt-5.4 pid 34508: E10_agent_L5P_test -> api_campaign_20261024_234809_stage3_xj-gpt-5.4.out
+2026-10-24 23:48:14 stage 2 xj-claude-opus-4.6 finished rc=1
+2026-10-24 23:56:39 stage 3 xj-gpt-5.4 finished rc=1
+2026-10-24 23:56:44 campaign done; complete=False attempt=1
+2026-10-25 00:20:28 campaign start pid 59176 plan configs\campaign_s45_l5perm_test.json: 3 stages, max_parallel 2
+2026-10-25 00:20:28 stage 1 started xj-gemini-3-pro pid 72232: E10_agent_L5P_test -> api_campaign_20261025_002028_stage1_xj-gemini-3-pro.out
+2026-10-25 00:20:28 stage 2 started xj-claude-opus-4.6 pid 70852: E10_agent_L5P_test -> api_campaign_20261025_002028_stage2_xj-claude-opus-4.6.out
