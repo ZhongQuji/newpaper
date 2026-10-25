@@ -97,7 +97,7 @@ at 64–66 % of today's cost. Price **[real token counts, GPT-4.1 mini + GPT-4.1
 K such that the expected number of unread members (from the retriever's calibrated scores) is < τ.
 **[sim]**: τ = 0.05 costs 70–90 % of K = 30 and never loses more than 0.01 F1; with a good retriever
 (d' = 2) it gains +0.04 while costing 70 % (Fig. S8b). Together with K = 10 and retriever-prune (M4′),
-"read less" is the best single-model choice in 139/432 sweep cells. Requires only calibrated
+"read less" is the best single-model choice in 146/432 sweep cells. Requires only calibrated
 retriever scores — zero extra calls.
 
 *Validation (≈ $1, dev):* `--k 10` vs `--k 30` on the same queries, GPT-4.1 mini, 2 seeds. This also

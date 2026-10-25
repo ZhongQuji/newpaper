@@ -59,7 +59,7 @@ experiments to run.
    never loses more than 0.01 F1; with a good retriever (d' = 2) it *gains* +0.04 while costing
    70 %. Retriever-prune (p ≥ 0.02, any position) does the same with zero extra calls: in the base
    world +0.036 F1 at 67 % of the cost — as good as the two-model cascade. Prefix-K=10 / adaptive-K /
-   retriever-prune together are the best single-model choice in 139/432 cells.
+   retriever-prune together are the best single-model choice in 146/432 cells.
 3. **Two models beat one — when lists dilute.** The same-level mini→flagship cascade with band 0.4
    is the most frequent equal-budget winner (170/432 cells), typically at 55–70 % of the flagship's
    cost; it survives correlated model errors (ρ = 0.7) and over-confidence (×1.4) with a smaller
